@@ -328,14 +328,11 @@ class ForceDiagram extends React.Component {
     constructor(props) {
         super(props);
         // this.state
-        //this.print = this.print.bind(this);
-        this.count = 100;
     }
 
     tickActions = () => {
 
-        this.count += 2;
-        console.log("update");
+        //console.log("update");
         //update circle positions to reflect node updates on each tick of the simulation 
         this.m_node
             // .attr("cx", this.count)
@@ -369,8 +366,9 @@ class ForceDiagram extends React.Component {
     init() {
         this.simulation = d3.forceSimulation();
 
+
         this.simulation
-            .force("charge_force", d3.forceManyBody())
+            .force("charge_force", d3.forceManyBody().strength(-100))
             .force("center_force", d3.forceCenter(+1000 / 2, +1000 / 2))
             .force("collide_force", d3.forceCollide(10, 1, 100));
 
@@ -392,7 +390,7 @@ class ForceDiagram extends React.Component {
             .data(nodes_data)
             .enter()
             .append("circle")
-            .attr("r", 5)
+            .attr("r", 10)
             .attr("fill", circleColour);
 
 
@@ -402,16 +400,41 @@ class ForceDiagram extends React.Component {
             .selectAll("line")
             .data(links_data)
             .enter().append("line")
-            .attr("stroke-width", 2)
+            .attr("stroke-width", 3)
             .style("stroke", linkColour);
 
-        // for (let i = 0; i < 100; i++) {
-            // this.simulation.tick();
-        // }
-        // this.tickActions();
+
+        var drag_handler = d3.drag()
+                            .on("start", this.dragStart)
+                            .on("drag", this.dragDrag)
+                            .on("end", this.dragEnd);
+
         
-        this.simulation.alpha(1).restart().tick();
+
+        drag_handler(this.m_node);
+        //this.simulation.alpha(1).restart().tick();
     }
+
+    dragStart = (d) => {       
+        if (!d3.event.active)
+            this.simulation.alphaTarget(0.5).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
+
+    dragDrag = (d) => {
+        d.fx = d3.event.x;
+        d.fy = d3.event.y;
+    }
+
+    dragEnd = (d) => {
+        if (!d3.event.active)
+            this.simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+    }
+
+
 
     render() {
         return (<div id={"svg_root"}></div>);
