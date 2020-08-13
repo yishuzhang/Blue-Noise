@@ -236,26 +236,38 @@ import './index.css';
 import * as d3 from 'd3'
 
 
-var nodes_data = [
-    { "name": "Lillian", "sex": "F" },
-    { "name": "Gordon", "sex": "M" },
-    { "name": "Sylvester", "sex": "M" },
-    { "name": "Mary", "sex": "F" },
-    { "name": "Helen", "sex": "F" },
-    { "name": "Jamie", "sex": "M" },
-    { "name": "Jessie", "sex": "F" },
-    { "name": "Ashton", "sex": "M" },
-    { "name": "Duncan", "sex": "M" },
-    { "name": "Evette", "sex": "F" },
-    { "name": "Mauer", "sex": "M" },
-    { "name": "Fray", "sex": "F" },
-    { "name": "Duke", "sex": "M" },
-    { "name": "Baron", "sex": "M" },
-    { "name": "Infante", "sex": "M" },
-    { "name": "Percy", "sex": "M" },
-    { "name": "Cynthia", "sex": "F" }
-]
+// var nodes_data = [
+//     { "name": "Lillian", "sex": "F" },
+//     { "name": "Gordon", "sex": "M" },
+//     { "name": "Sylvester", "sex": "M" },
+//     { "name": "Mary", "sex": "F" },
+//     { "name": "Helen", "sex": "F" },
+//     { "name": "Jamie", "sex": "M" },
+//     { "name": "Jessie", "sex": "F" },
+//     { "name": "Ashton", "sex": "M" },
+//     { "name": "Duncan", "sex": "M" },
+//     { "name": "Evette", "sex": "F" },
+//     { "name": "Mauer", "sex": "M" },
+//     { "name": "Fray", "sex": "F" },
+//     { "name": "Duke", "sex": "M" },
+//     { "name": "Baron", "sex": "M" },
+//     { "name": "Infante", "sex": "M" },
+//     { "name": "Percy", "sex": "M" },
+//     { "name": "Cynthia", "sex": "F" }
+// ]
 
+var nodes_data = [
+    { "name": "hair", "sex": "M" },
+    { "name": "earl", "sex": "M" },
+    { "name": "earr", "sex": "M" },
+    { "name": "chin", "sex": "M" },
+    { "name": "neck", "sex": "M" },
+    { "name": "arml", "sex": "M" },
+    { "name": "armr", "sex": "M" },
+    { "name": "belly", "sex": "M" },
+    { "name": "feetl", "sex": "M" },
+    { "name": "feetr", "sex": "M" }
+]
 
 function circleColour(d) {
     if (d.sex == "M") {
@@ -268,7 +280,7 @@ function circleColour(d) {
 
 //Relationships
 //type: A for Ally, E for Enemy
-var links_data = [
+/* var links_data = [
     { "source": "Sylvester", "target": "Gordon", "type": "A" },
     { "source": "Sylvester", "target": "Lillian", "type": "A" },
     { "source": "Sylvester", "target": "Mary", "type": "A" },
@@ -294,9 +306,20 @@ var links_data = [
     { "source": "Cynthia", "target": "Sylvester", "type": "E" },
     { "source": "Cynthia", "target": "Jamie", "type": "E" },
     { "source": "Mauer", "target": "Jessie", "type": "E" }
+] */
+
+var links_data = [
+    { "source": "hair", "target": "earl", "type": "A" },
+    { "source": "hair", "target": "earr", "type": "A" },
+    { "source": "earl", "target": "chin", "type": "A" },
+    { "source": "earr", "target": "chin", "type": "A" },
+    { "source": "chin", "target": "neck", "type": "A" },
+    { "source": "neck", "target": "arml", "type": "A" },
+    { "source": "neck", "target": "armr", "type": "A" },
+    { "source": "neck", "target": "belly", "type": "A" },
+    { "source": "belly", "target": "feetl", "type": "A" },
+    { "source": "belly", "target": "feetr", "type": "A" }
 ]
-
-
 
 //Function to choose the line colour and thickness 
 //If the link type is "A" return green 
@@ -321,7 +344,17 @@ function linkColour(d) {
 
 
 
-
+function mysterious_force(alpha1) {
+    
+    for (var i = 0; i != nodes_data.length; ++i) {
+        var curr_node = nodes_data[i];
+        var rand1 = Math.floor(Math.random() * 10 ) - 10;
+        var rand2 = Math.floor(Math.random() * 10 ) - 10;
+        curr_node.vx += rand1 * alpha1;
+        curr_node.vy += rand2 * alpha1;
+        console.log("alpha = " + alpha1);
+    }
+}
 
 
 class ForceDiagram extends React.Component {
@@ -362,15 +395,48 @@ class ForceDiagram extends React.Component {
 
         this.init();
     }
+    
+    resetNodes() {
+        this.m_node
+            // .attr("cx", this.count)
+            // .attr("cy", this.count);
+            .attr("cx", function (d) {d.x = 500; return d.x})
+            .attr("cy", function (d) {d.y = 500;return d.x});
+
+        //update link positions 
+        //simply tells one end of the line to follow one node around
+        //and the other end of the line to follow the other node around
+        this.m_link
+            .attr("x1", function (d) { return d.source.x; })
+            .attr("y1", function (d) { return d.source.y; })
+            .attr("x2", function (d) { return d.target.x; })
+            .attr("y2", function (d) { return d.target.y; });
+    }
+
+    reLoad() {
+        console.log("reLoad");
+        this.simulation.stop();
+        this.svg.selectAll(".nodes").remove();
+        this.svg.selectAll(".links").remove();
+        this.resetNodes();
+    }
+
+    reLoad2() {
+        console.log("reLoad2");
+        this.init();
+    }
+
+
 
     init() {
         this.simulation = d3.forceSimulation();
 
-
+        this.simulation.alpha(1);
         this.simulation
             .force("charge_force", d3.forceManyBody().strength(-100))
             .force("center_force", d3.forceCenter(+1000 / 2, +1000 / 2))
-            .force("collide_force", d3.forceCollide(10, 1, 100));
+            .force("collide_force", d3.forceCollide(10, 1, 100))
+            .force("custom_force", mysterious_force(this.simulation.alpha()));
 
         this.simulation.nodes(nodes_data);
 
@@ -378,12 +444,16 @@ class ForceDiagram extends React.Component {
         var link_force = d3.forceLink(links_data)
             .id(function (d) { return d.name; });
 
-        this.simulation.force("links", link_force);
+        this.simulation.force("link_force", link_force);
 
         //tick
         this.simulation.on("tick", this.tickActions);
 
         //vis
+
+        // var g = this.svg.append("g")
+        // .attr("class", "everything");
+
         this.m_node = this.svg.append("g")
             .attr("class", "nodes")
             .selectAll("circle")
@@ -404,6 +474,7 @@ class ForceDiagram extends React.Component {
             .style("stroke", linkColour);
 
 
+
         var drag_handler = d3.drag()
                             .on("start", this.dragStart)
                             .on("drag", this.dragDrag)
@@ -412,7 +483,18 @@ class ForceDiagram extends React.Component {
         
 
         drag_handler(this.m_node);
+
+        var zoom_handler = d3.zoom()
+                                .on("zoom", this.zoomActions);
+        zoom_handler(this.svg);
+        
         //this.simulation.alpha(1).restart().tick();
+    }
+
+    zoomActions = () => {
+
+        this.svg.selectAll("g").attr("transform", d3.event.transform);
+        this.svg.on("mousedown.zoom", null);
     }
 
     dragStart = (d) => {       
@@ -437,16 +519,67 @@ class ForceDiagram extends React.Component {
 
 
     render() {
+        const shouldRefresh = this.props.shouldRefresh;
+        if (shouldRefresh) {
+            this.reLoad();
+        }
+        const shouldRefresh2 = this.props.shouldRefresh2;
+        if (shouldRefresh2) {
+            this.reLoad2();
+        }
+        
         return (<div id={"svg_root"}></div>);
     }
 }
 
+class PageLayout extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            refreshGraph: false,
+            refreshGraph2: false,
+        };
+        this.handleRefreshClicked=this.handleRefreshClicked.bind(this);
+        this.handleRefreshClicked2=this.handleRefreshClicked2.bind(this);
+    }
+    handleRefreshClicked()
+    {
+        this.setState({refreshGraph: true,});
+        this.setState({refreshGraph2: false,});
+    }
 
+    handleRefreshClicked2()
+    {
+        this.setState({refreshGraph2: true,});
+        this.setState({refreshGraph: false,});
+    }
+    render() {
+        return (
+            <div className="page-layout">
+                <div className="force-graph">
+                    <ForceDiagram 
+                        shouldRefresh={this.state.refreshGraph}
+                        shouldRefresh2={this.state.refreshGraph2}
+                    />
+                </div>
+                <div className="interactions">
+                    <ol>
+                        <li>
+                            <button onClick = {this.handleRefreshClicked}>Click me!</button>
+                            <button onClick = {this.handleRefreshClicked2}>Click me!</button>
+        
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        );
+    }
+}
 
 //========================================
 
 ReactDOM.render(
-    <ForceDiagram />
+    <PageLayout />
     ,
     document.getElementById('root')
 );
